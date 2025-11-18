@@ -10,7 +10,10 @@ A TypeScript-based clock application that prints messages at specific time inter
   - Prints "bong" every hour
 
 - **Priority system**: Only one message per second (bong > tock > tick)
+- **Precise timing**: Single interval approach prevents race conditions
 - **Runtime configuration**: Update messages via REST API while the app is running
+- **Input validation**: Validates message format and length (max 100 characters)
+- **Error handling**: Comprehensive error handling for all API endpoints
 - **Auto-shutdown**: Automatically exits after 3 hours
 - **Production-ready**: TypeScript, ESLint, Prettier, and Jest testing
 
@@ -73,7 +76,7 @@ curl -X PATCH http://localhost:3000/config \
   -d '{"tick": "quack"}'
 ```
 
-Response:
+Success response:
 ```json
 {
   "message": "Configuration updated",
@@ -84,6 +87,21 @@ Response:
   }
 }
 ```
+
+Validation error response (400):
+```json
+{
+  "error": "Validation failed",
+  "errors": [
+    "tick must be a non-empty string (max 100 characters)"
+  ]
+}
+```
+
+**Validation rules:**
+- Messages must be non-empty strings
+- Maximum length: 100 characters
+- Must not be only whitespace
 
 ### Health Check
 
@@ -140,16 +158,24 @@ clock/
 │   └── index.ts             # Application entry point
 ├── tests/
 │   ├── ClockEngine.spec.ts
-│   └── ConfigManager.spec.ts
+│   ├── ConfigManager.spec.ts
+│   └── server.spec.ts
 ├── package.json
 ├── tsconfig.json
 ├── jest.config.js
-├── .eslintrc.json
+├── eslint.config.mjs
 ├── .prettierrc
 └── README.md
 ```
 
 ## How It Works
+
+### Timing Architecture
+
+The clock uses a **single interval approach** that checks time every 100ms. This design:
+- Prevents race conditions between multiple intervals
+- Ensures precise, synchronized timing
+- Guarantees only one message prints per second
 
 ### Priority System
 

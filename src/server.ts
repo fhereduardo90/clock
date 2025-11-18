@@ -1,6 +1,18 @@
 import express, { Request, Response } from 'express';
 import { ConfigManager } from './ConfigManager';
 
+/**
+ * Validates that a value is a non-empty string within allowed length
+ */
+function isValidMessage(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 100 &&
+    value.trim().length > 0
+  );
+}
+
 export class Server {
   private app: express.Application;
   private configManager: ConfigManager;
@@ -10,39 +22,108 @@ export class Server {
     this.configManager = configManager;
     this.app = express();
     this.app.use(express.json());
+    this.setupErrorHandlers();
     this.setupRoutes();
     this.server = this.app.listen(port, () => {
       console.log(`API server running on http://localhost:${port}`);
     });
   }
 
+  /**
+   * Sets up global error handlers for Express
+   */
+  private setupErrorHandlers(): void {
+    this.app.use(
+      (err: Error, _req: Request, res: Response): void => {
+        console.error('Server error:', err);
+        res.status(500).json({
+          error: 'Internal server error',
+          message: err.message,
+        });
+      }
+    );
+  }
+
   private setupRoutes(): void {
     this.app.get('/config', (_req: Request, res: Response) => {
-      res.json(this.configManager.getMessages());
+      try {
+        res.json(this.configManager.getMessages());
+      } catch (error) {
+        res.status(500).json({
+          error: 'Failed to retrieve configuration',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
     });
 
     this.app.patch('/config', (req: Request, res: Response) => {
-      const { tick, tock, bong } = req.body;
-      const updates: { tick?: string; tock?: string; bong?: string } = {};
+      try {
+        const { tick, tock, bong } = req.body;
+        const updates: { tick?: string; tock?: string; bong?: string } = {};
+        const errors: string[] = [];
 
-      if (tick !== undefined) updates.tick = tick;
-      if (tock !== undefined) updates.tock = tock;
-      if (bong !== undefined) updates.bong = bong;
+        // Validate and collect updates
+        if (tick !== undefined) {
+          if (isValidMessage(tick)) {
+            updates.tick = tick;
+          } else {
+            errors.push('tick must be a non-empty string (max 100 characters)');
+          }
+        }
 
-      if (Object.keys(updates).length === 0) {
-        res.status(400).json({ error: 'No valid updates provided' });
-        return;
+        if (tock !== undefined) {
+          if (isValidMessage(tock)) {
+            updates.tock = tock;
+          } else {
+            errors.push('tock must be a non-empty string (max 100 characters)');
+          }
+        }
+
+        if (bong !== undefined) {
+          if (isValidMessage(bong)) {
+            updates.bong = bong;
+          } else {
+            errors.push('bong must be a non-empty string (max 100 characters)');
+          }
+        }
+
+        // Return validation errors if any
+        if (errors.length > 0) {
+          res.status(400).json({ error: 'Validation failed', errors });
+          return;
+        }
+
+        // Check if any valid updates were provided
+        if (Object.keys(updates).length === 0) {
+          res.status(400).json({
+            error: 'No valid updates provided',
+            hint: 'Provide at least one of: tick, tock, bong',
+          });
+          return;
+        }
+
+        this.configManager.updateMessages(updates);
+        res.json({
+          message: 'Configuration updated',
+          config: this.configManager.getMessages(),
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: 'Failed to update configuration',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
-
-      this.configManager.updateMessages(updates);
-      res.json({
-        message: 'Configuration updated',
-        config: this.configManager.getMessages(),
-      });
     });
 
     this.app.get('/health', (_req: Request, res: Response) => {
-      res.json({ status: 'ok' });
+      try {
+        res.json({ status: 'ok' });
+      } catch (error) {
+        res.status(500).json({
+          error: 'Health check failed',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
     });
   }
 

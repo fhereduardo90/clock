@@ -1,11 +1,19 @@
 import { ConfigManager } from './ConfigManager';
 
+/**
+ * ClockEngine manages the clock's timing mechanism.
+ * Uses a single interval checking approach to ensure precise timing
+ * and prevent race conditions between multiple intervals.
+ */
 export class ClockEngine {
   private configManager: ConfigManager;
-  private secondInterval: NodeJS.Timeout | null = null;
-  private minuteInterval: NodeJS.Timeout | null = null;
-  private hourInterval: NodeJS.Timeout | null = null;
+  private mainInterval: NodeJS.Timeout | null = null;
   private isRunning = false;
+  /**
+   * Tracks the last second processed to prevent duplicate prints
+   * within the same second. Initialized to -1 to ensure first second triggers.
+   */
+  private lastSecond = -1;
 
   constructor(configManager: ConfigManager) {
     this.configManager = configManager;
@@ -18,10 +26,14 @@ export class ClockEngine {
 
     this.isRunning = true;
 
-    // Start intervals aligned to system clock
-    this.startSecondInterval();
-    this.startMinuteInterval();
-    this.startHourInterval();
+    /**
+     * Check time every 100ms for precision instead of using separate
+     * 1s/60s/3600s intervals. This prevents race conditions and ensures
+     * only one message prints per second based on priority system.
+     */
+    this.mainInterval = setInterval(() => {
+      this.tick();
+    }, 100);
   }
 
   public stop(): void {
@@ -31,61 +43,48 @@ export class ClockEngine {
 
     this.isRunning = false;
 
-    if (this.secondInterval) {
-      clearInterval(this.secondInterval);
-      this.secondInterval = null;
+    if (this.mainInterval) {
+      clearInterval(this.mainInterval);
+      this.mainInterval = null;
     }
 
-    if (this.minuteInterval) {
-      clearInterval(this.minuteInterval);
-      this.minuteInterval = null;
-    }
-
-    if (this.hourInterval) {
-      clearInterval(this.hourInterval);
-      this.hourInterval = null;
-    }
+    this.lastSecond = -1;
   }
 
-  private startSecondInterval(): void {
-    this.secondInterval = setInterval(() => {
-      this.printIfAllowed('tick');
-    }, 1000);
-  }
-
-  private startMinuteInterval(): void {
-    this.minuteInterval = setInterval(() => {
-      this.printIfAllowed('tock');
-    }, 60000);
-  }
-
-  private startHourInterval(): void {
-    this.hourInterval = setInterval(() => {
-      this.printIfAllowed('bong');
-    }, 3600000);
-  }
-
-  private printIfAllowed(messageType: 'tick' | 'tock' | 'bong'): void {
+  /**
+   * Determines what message to print based on current time.
+   * Priority system ensures only one message per second:
+   * - Hour (minute=0, second=0): bong
+   * - Minute (second=0): tock
+   * - All other seconds: tick
+   */
+  private tick(): void {
     const now = new Date();
-    const seconds = now.getSeconds();
+    const currentSecond = now.getSeconds();
+
+    // Only process once per second
+    if (currentSecond === this.lastSecond) {
+      return;
+    }
+
+    this.lastSecond = currentSecond;
+
     const minutes = now.getMinutes();
 
     // Priority: bong > tock > tick
-    // Only print if no higher priority message should be printed
-    if (messageType === 'tick') {
-      // Don't print tick on the minute or hour
-      if (seconds === 0) {
-        return;
-      }
-    } else if (messageType === 'tock') {
-      // Don't print tock on the hour
-      if (minutes === 0 && seconds === 0) {
-        return;
-      }
+    if (minutes === 0 && currentSecond === 0) {
+      // Hour boundary - print bong
+      const message = this.configManager.getMessage('bong');
+      console.log(message);
+    } else if (currentSecond === 0) {
+      // Minute boundary - print tock
+      const message = this.configManager.getMessage('tock');
+      console.log(message);
+    } else {
+      // Every other second - print tick
+      const message = this.configManager.getMessage('tick');
+      console.log(message);
     }
-
-    const message = this.configManager.getMessage(messageType);
-    console.log(message);
   }
 
   public getStatus(): boolean {
