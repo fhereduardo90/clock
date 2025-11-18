@@ -22,26 +22,10 @@ export class Server {
     this.configManager = configManager;
     this.app = express();
     this.app.use(express.json());
-    this.setupErrorHandlers();
     this.setupRoutes();
     this.server = this.app.listen(port, () => {
       console.log(`API server running on http://localhost:${port}`);
     });
-  }
-
-  /**
-   * Sets up global error handlers for Express
-   */
-  private setupErrorHandlers(): void {
-    this.app.use(
-      (err: Error, _req: Request, res: Response): void => {
-        console.error('Server error:', err);
-        res.status(500).json({
-          error: 'Internal server error',
-          message: err.message,
-        });
-      }
-    );
   }
 
   private setupRoutes(): void {
