@@ -178,7 +178,3 @@ tick
 ## Shutdown
 
 The application will automatically shut down after 3 hours. You can also stop it manually with `Ctrl+C`, which triggers a graceful shutdown.
-
-## License
-
-ISC
