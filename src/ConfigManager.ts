@@ -1,8 +1,5 @@
-export interface ClockMessages {
-  tick: string;
-  tock: string;
-  bong: string;
-}
+import { ClockMessages, MessageKey } from './types';
+import { DEFAULT_MESSAGES } from './constants';
 
 /**
  * ConfigManager handles dynamic configuration of clock messages.
@@ -13,9 +10,8 @@ export class ConfigManager {
 
   constructor(initialMessages?: Partial<ClockMessages>) {
     this.messages = {
-      tick: initialMessages?.tick || 'tick',
-      tock: initialMessages?.tock || 'tock',
-      bong: initialMessages?.bong || 'bong',
+      ...DEFAULT_MESSAGES,
+      ...initialMessages,
     };
   }
 
@@ -37,7 +33,7 @@ export class ConfigManager {
     };
   }
 
-  public getMessage(key: keyof ClockMessages): string {
+  public getMessage(key: MessageKey): string {
     return this.messages[key];
   }
 }

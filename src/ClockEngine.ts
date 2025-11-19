@@ -1,4 +1,5 @@
 import { ConfigManager } from './ConfigManager';
+import { CLOCK_TICK_INTERVAL_MS } from './constants';
 
 /**
  * ClockEngine manages the clock's timing mechanism.
@@ -27,13 +28,13 @@ export class ClockEngine {
     this.isRunning = true;
 
     /**
-     * Check time every 100ms for precision instead of using separate
+     * Check time at regular intervals for precision instead of using separate
      * 1s/60s/3600s intervals. This prevents race conditions and ensures
      * only one message prints per second based on priority system.
      */
     this.mainInterval = setInterval(() => {
       this.tick();
-    }, 100);
+    }, CLOCK_TICK_INTERVAL_MS);
   }
 
   public stop(): void {

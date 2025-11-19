@@ -1,36 +1,15 @@
 import express, { Request, Response } from 'express';
 import { Server as HttpServer } from 'http';
-import { z } from 'zod';
 import { ConfigManager } from './ConfigManager';
-
-/**
- * Zod schema for validating clock messages
- * - Must be a non-empty string
- * - Maximum 100 characters
- * - Cannot be only whitespace
- */
-const MessageSchema = z
-  .string()
-  .min(1)
-  .max(100)
-  .refine((val) => val.trim().length > 0);
-
-/**
- * Zod schema for validating configuration updates
- * Allows partial updates with optional tick, tock, and bong fields
- */
-const ConfigUpdateSchema = z.object({
-  tick: MessageSchema.optional(),
-  tock: MessageSchema.optional(),
-  bong: MessageSchema.optional(),
-});
+import { DEFAULT_PORT } from './constants';
+import { ConfigUpdateSchema } from './schemas';
 
 export class Server {
   private app: express.Application;
   private configManager: ConfigManager;
   private server: HttpServer | null = null;
 
-  constructor(configManager: ConfigManager, port: number = 3000) {
+  constructor(configManager: ConfigManager, port: number = DEFAULT_PORT) {
     this.configManager = configManager;
     this.app = express();
     this.app.use(express.json());

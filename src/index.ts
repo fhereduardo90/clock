@@ -2,11 +2,19 @@ import 'dotenv/config';
 import { ConfigManager } from './ConfigManager';
 import { ClockEngine } from './ClockEngine';
 import { Server } from './server';
+import {
+  DEFAULT_PORT,
+  DEFAULT_SHUTDOWN_HOURS,
+  MILLISECONDS_PER_HOUR,
+} from './constants';
 
-// Configuration from environment variables
-const PORT = parseInt(process.env.PORT || '3000', 10);
-const SHUTDOWN_TIME_HOURS = parseInt(process.env.SHUTDOWN_TIME_HOURS || '3', 10);
-const SHUTDOWN_TIME_MS = SHUTDOWN_TIME_HOURS * 60 * 60 * 1000;
+// Configuration from environment variables with fallback to constants
+const PORT = parseInt(process.env.PORT || String(DEFAULT_PORT), 10);
+const SHUTDOWN_TIME_HOURS = parseInt(
+  process.env.SHUTDOWN_TIME_HOURS || String(DEFAULT_SHUTDOWN_HOURS),
+  10
+);
+const SHUTDOWN_TIME_MS = SHUTDOWN_TIME_HOURS * MILLISECONDS_PER_HOUR;
 
 function main() {
   console.log('Starting Clock Application...');
