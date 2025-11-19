@@ -1,17 +1,28 @@
 import express, { Request, Response } from 'express';
+import { z } from 'zod';
 import { ConfigManager } from './ConfigManager';
 
 /**
- * Validates that a value is a non-empty string within allowed length
+ * Zod schema for validating clock messages
+ * - Must be a non-empty string
+ * - Maximum 100 characters
+ * - Cannot be only whitespace
  */
-function isValidMessage(value: unknown): value is string {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= 100 &&
-    value.trim().length > 0
-  );
-}
+const MessageSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .refine((val) => val.trim().length > 0);
+
+/**
+ * Zod schema for validating configuration updates
+ * Allows partial updates with optional tick, tock, and bong fields
+ */
+const ConfigUpdateSchema = z.object({
+  tick: MessageSchema.optional(),
+  tock: MessageSchema.optional(),
+  bong: MessageSchema.optional(),
+});
 
 export class Server {
   private app: express.Application;
@@ -42,40 +53,21 @@ export class Server {
 
     this.app.patch('/config', (req: Request, res: Response) => {
       try {
-        const { tick, tock, bong } = req.body;
-        const updates: { tick?: string; tock?: string; bong?: string } = {};
-        const errors: string[] = [];
+        // Validate request body with Zod
+        const result = ConfigUpdateSchema.safeParse(req.body);
 
-        // Validate and collect updates
-        if (tick !== undefined) {
-          if (isValidMessage(tick)) {
-            updates.tick = tick;
-          } else {
-            errors.push('tick must be a non-empty string (max 100 characters)');
-          }
-        }
+        if (!result.success) {
+          // Format Zod validation errors with consistent message
+          const errors = result.error.issues.map((issue) => {
+            const field = issue.path.join('.');
+            return `${field} must be a non-empty string (max 100 characters)`;
+          });
 
-        if (tock !== undefined) {
-          if (isValidMessage(tock)) {
-            updates.tock = tock;
-          } else {
-            errors.push('tock must be a non-empty string (max 100 characters)');
-          }
-        }
-
-        if (bong !== undefined) {
-          if (isValidMessage(bong)) {
-            updates.bong = bong;
-          } else {
-            errors.push('bong must be a non-empty string (max 100 characters)');
-          }
-        }
-
-        // Return validation errors if any
-        if (errors.length > 0) {
           res.status(400).json({ error: 'Validation failed', errors });
           return;
         }
+
+        const updates = result.data;
 
         // Check if any valid updates were provided
         if (Object.keys(updates).length === 0) {
