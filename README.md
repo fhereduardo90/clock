@@ -12,10 +12,19 @@ A TypeScript-based clock application that prints messages at specific time inter
 - **Priority system**: Only one message per second (bong > tock > tick)
 - **Precise timing**: Single interval approach prevents race conditions
 - **Runtime configuration**: Update messages via REST API while the app is running
-- **Input validation**: Validates message format and length (max 100 characters)
+- **Schema validation**: Zod-based type-safe input validation
 - **Error handling**: Comprehensive error handling for all API endpoints
-- **Auto-shutdown**: Automatically exits after 3 hours
-- **Production-ready**: TypeScript, ESLint, Prettier, and Jest testing
+- **Environment configuration**: Configurable port and shutdown time via environment variables
+- **Auto-shutdown**: Configurable automatic shutdown (default 3 hours)
+- **Production-ready**:
+  - Full TypeScript strict mode
+  - ESLint, Prettier code quality tools
+  - Comprehensive test suite (47 tests, 96%+ coverage)
+  - HTTP endpoint integration tests
+  - Timing logic tests with mocked timers
+  - GitHub Actions CI/CD pipeline
+  - Pre-commit hooks with Husky
+  - Docker support for containerized deployment
 
 ## Requirements
 
@@ -45,6 +54,36 @@ Build and run the compiled version:
 ```bash
 npm run build
 npm start
+```
+
+### Docker
+
+Run the application in a Docker container:
+
+```bash
+# Build the Docker image
+docker build -t clock-app .
+
+# Run the container
+docker run -p 3000:3000 clock-app
+```
+
+Or use docker-compose:
+
+```bash
+docker-compose up
+```
+
+### Environment Variables
+
+Configure the application using environment variables. Create a `.env` file (see `.env.example`):
+
+```bash
+# Server Configuration
+PORT=3000
+
+# Shutdown time in hours
+SHUTDOWN_TIME_HOURS=3
 ```
 
 ## API Endpoints
@@ -147,25 +186,57 @@ Format code with Prettier:
 npm run format
 ```
 
+### Pre-commit Hooks
+
+The project uses Husky to run linting and tests before each commit, ensuring code quality:
+
+```bash
+# Runs automatically on git commit
+# - ESLint checks
+# - Full test suite
+```
+
+## CI/CD
+
+The project includes a GitHub Actions workflow that runs on every push and pull request:
+
+- Code linting
+- Full test suite with coverage
+- TypeScript build verification
+- Coverage report upload (Codecov)
+
+See `.github/workflows/ci.yml` for the full configuration.
+
 ## Project Structure
 
 ```
 clock/
 ├── src/
-│   ├── ClockEngine.ts       # Core clock logic with interval management
-│   ├── ConfigManager.ts     # Message configuration management
-│   ├── server.ts            # Express API server
-│   └── index.ts             # Application entry point
+│   ├── ClockEngine.ts        # Core clock logic with interval management
+│   ├── ConfigManager.ts      # Message configuration management
+│   ├── server.ts             # Express API server with Zod validation
+│   └── index.ts              # Application entry point
 ├── tests/
-│   ├── ClockEngine.spec.ts
-│   ├── ConfigManager.spec.ts
-│   └── server.spec.ts
-├── package.json
-├── tsconfig.json
-├── jest.config.js
-├── eslint.config.mjs
-├── .prettierrc
-└── README.md
+│   ├── ClockEngine.spec.ts   # Timing logic tests with mocked timers
+│   ├── ConfigManager.spec.ts # Configuration management tests
+│   └── server.spec.ts        # HTTP endpoint integration tests
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # GitHub Actions CI/CD pipeline
+├── .husky/
+│   └── pre-commit            # Pre-commit hooks
+├── dist/                     # Compiled JavaScript output
+├── coverage/                 # Test coverage reports
+├── Dockerfile                # Docker container configuration
+├── docker-compose.yml        # Docker Compose setup
+├── .dockerignore             # Docker build exclusions
+├── .env.example              # Environment variable template
+├── package.json              # Dependencies and scripts
+├── tsconfig.json             # TypeScript configuration
+├── jest.config.js            # Jest testing configuration
+├── eslint.config.mjs         # ESLint configuration
+├── .prettierrc               # Prettier configuration
+└── README.md                 # This file
 ```
 
 ## How It Works
