@@ -1,33 +1,37 @@
+import 'dotenv/config';
 import { ConfigManager } from './ConfigManager';
 import { ClockEngine } from './ClockEngine';
 import { Server } from './server';
 
-const THREE_HOURS_IN_MS = 3 * 60 * 60 * 1000;
+// Configuration from environment variables
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const SHUTDOWN_TIME_HOURS = parseInt(process.env.SHUTDOWN_TIME_HOURS || '3', 10);
+const SHUTDOWN_TIME_MS = SHUTDOWN_TIME_HOURS * 60 * 60 * 1000;
 
 function main() {
   console.log('Starting Clock Application...');
-  console.log('The application will run for 3 hours and then exit.');
+  console.log(`The application will run for ${SHUTDOWN_TIME_HOURS} hours and then exit.`);
   console.log('Use the API to update messages:');
-  console.log('  GET  http://localhost:3000/config - View current config');
+  console.log(`  GET  http://localhost:${PORT}/config - View current config`);
   console.log(
-    '  PATCH http://localhost:3000/config - Update messages (e.g., {"tick": "quack"})'
+    `  PATCH http://localhost:${PORT}/config - Update messages (e.g., {"tick": "quack"})`
   );
   console.log('');
 
   // Initialize components
   const configManager = new ConfigManager();
   const clockEngine = new ClockEngine(configManager);
-  const server = new Server(configManager, 3000);
+  const server = new Server(configManager, PORT);
 
   // Start the clock
   clockEngine.start();
 
-  // Set up 3-hour shutdown timer
+  // Set up shutdown timer
   const shutdownTimer = setTimeout(() => {
     console.log('');
-    console.log('3 hours elapsed. Shutting down...');
+    console.log(`${SHUTDOWN_TIME_HOURS} hours elapsed. Shutting down...`);
     shutdown();
-  }, THREE_HOURS_IN_MS);
+  }, SHUTDOWN_TIME_MS);
 
   // Handle graceful shutdown
   const shutdown = () => {
