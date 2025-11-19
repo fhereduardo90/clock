@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { Server as HttpServer } from 'http';
 import { z } from 'zod';
 import { ConfigManager } from './ConfigManager';
 
@@ -27,7 +28,7 @@ const ConfigUpdateSchema = z.object({
 export class Server {
   private app: express.Application;
   private configManager: ConfigManager;
-  private server: ReturnType<typeof express.application.listen> | null = null;
+  private server: HttpServer | null = null;
 
   constructor(configManager: ConfigManager, port: number = 3000) {
     this.configManager = configManager;
