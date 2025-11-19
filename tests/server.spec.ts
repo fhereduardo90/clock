@@ -11,8 +11,7 @@ describe('Server HTTP Endpoints', () => {
   beforeEach(() => {
     configManager = new ConfigManager();
     server = new Server(configManager, 3001);
-    // Access the private app property for testing
-    app = (server as any).app;
+    app = server.getApp();
   });
 
   afterEach(() => {

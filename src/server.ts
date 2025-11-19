@@ -117,4 +117,11 @@ export class Server {
       this.server = null;
     }
   }
+
+  /**
+   * Returns the Express application instance for testing purposes
+   */
+  public getApp(): express.Application {
+    return this.app;
+  }
 }
