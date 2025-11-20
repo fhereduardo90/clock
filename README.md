@@ -1,5 +1,9 @@
 # Clock Application
 
+![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)
+![Node](https://img.shields.io/badge/node-22.17.0-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)
+
 A TypeScript-based clock application that prints messages at specific time intervals with dynamic configuration capabilities.
 
 ## Features
