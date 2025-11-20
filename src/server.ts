@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { Server as HttpServer } from 'http';
+import helmet from 'helmet';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
@@ -12,7 +13,13 @@ export class Server {
   constructor(configManager: ConfigManager, port: number = DEFAULT_PORT) {
     this.configManager = configManager;
     this.app = express();
+
+    // Security middleware
+    this.app.use(helmet());
+
+    // Body parsing middleware
     this.app.use(express.json());
+
     this.setupRoutes();
     this.server = this.app.listen(port, () => {
       console.log(`API server running on http://localhost:${port}`);

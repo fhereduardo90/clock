@@ -13,6 +13,7 @@ A TypeScript-based clock application that prints messages at specific time inter
 - **Precise timing**: Single interval approach prevents race conditions
 - **Runtime configuration**: Update messages via REST API while the app is running
 - **Schema validation**: Zod-based type-safe input validation
+- **Security**: Helmet middleware for secure HTTP headers
 - **Error handling**: Comprehensive error handling for all API endpoints
 - **Environment configuration**: Configurable port and shutdown time via environment variables
 - **Auto-shutdown**: Configurable automatic shutdown (default 3 hours)
