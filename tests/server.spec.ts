@@ -210,7 +210,9 @@ describe('Server HTTP Endpoints', () => {
           .expect(400);
 
         expect(response.body.error).toBe('No valid updates provided');
-        expect(response.body.hint).toBe('Provide at least one of: tick, tock, bong');
+        expect(response.body.hint).toBe(
+          'Provide at least one of: tick, tock, bong'
+        );
       });
 
       it('should reject request with only invalid fields', async () => {
