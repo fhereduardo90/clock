@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import cors from 'cors';
+import compression from 'compression';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
@@ -20,6 +21,9 @@ export class Server {
 
     // Security middleware
     this.app.use(helmet());
+
+    // Response compression (gzip)
+    this.app.use(compression());
 
     // CORS configuration
     const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
