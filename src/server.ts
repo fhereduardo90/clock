@@ -3,6 +3,7 @@ import { Server as HttpServer } from 'http';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
+import cors from 'cors';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
@@ -19,6 +20,15 @@ export class Server {
 
     // Security middleware
     this.app.use(helmet());
+
+    // CORS configuration
+    const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+    this.app.use(
+      cors({
+        origin: corsOrigin,
+        credentials: true,
+      })
+    );
 
     // Request logging - integrate with Winston
     const morganFormat =
