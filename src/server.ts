@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { Server as HttpServer } from 'http';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
@@ -18,6 +19,19 @@ export class Server {
 
     // Security middleware
     this.app.use(helmet());
+
+    // Request logging - integrate with Winston
+    const morganFormat =
+      ':method :url :status :res[content-length] - :response-time ms';
+    this.app.use(
+      morgan(morganFormat, {
+        stream: {
+          write: (message: string) => {
+            logger.info(message.trim());
+          },
+        },
+      })
+    );
 
     // Rate limiting - 100 requests per 15 minutes per IP
     const limiter = rateLimit({
