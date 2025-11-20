@@ -264,4 +264,43 @@ describe('Server HTTP Endpoints', () => {
       expect(response.headers['content-type']).toMatch(/json/);
     });
   });
+
+  describe('Middleware', () => {
+    describe('Rate Limiting', () => {
+      it('should include rate limit headers in responses', async () => {
+        const response = await request(app).get('/health').expect(200);
+
+        expect(response.headers['ratelimit-limit']).toBe('100');
+        expect(response.headers['ratelimit-remaining']).toBeDefined();
+        expect(response.headers['ratelimit-reset']).toBeDefined();
+      });
+
+      it('should enforce rate limiting after 100 concurrent requests', async () => {
+        // Make 101 concurrent requests to exceed the limit
+        const requests = Array.from({ length: 101 }, () =>
+          request(app).get('/health')
+        );
+
+        const responses = await Promise.all(requests);
+
+        // Count successful and rate-limited responses
+        const successCount = responses.filter((r) => r.status === 200).length;
+        const rateLimitedCount = responses.filter(
+          (r) => r.status === 429
+        ).length;
+
+        // At least 1 request should be rate limited
+        expect(successCount).toBeLessThanOrEqual(100);
+        expect(rateLimitedCount).toBeGreaterThanOrEqual(1);
+
+        // Check rate limited response message
+        const rateLimited = responses.find((r) => r.status === 429);
+        if (rateLimited) {
+          expect(rateLimited.text).toMatch(
+            /Too many requests from this IP, please try again later/
+          );
+        }
+      });
+    });
+  });
 });
