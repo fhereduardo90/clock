@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
+import { logger } from './logger';
 
 export class Server {
   private app: express.Application;
@@ -22,7 +23,7 @@ export class Server {
 
     this.setupRoutes();
     this.server = this.app.listen(port, () => {
-      console.log(`API server running on http://localhost:${port}`);
+      logger.info(`API server running on http://localhost:${port}`);
     });
   }
 

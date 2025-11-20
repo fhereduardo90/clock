@@ -1,5 +1,6 @@
 import { ConfigManager } from './ConfigManager';
 import { CLOCK_TICK_INTERVAL_MS } from './constants';
+import { logger } from './logger';
 
 /**
  * ClockEngine manages the clock's timing mechanism.
@@ -76,15 +77,15 @@ export class ClockEngine {
     if (minutes === 0 && currentSecond === 0) {
       // Hour boundary - print bong
       const message = this.configManager.getMessage('bong');
-      console.log(message);
+      logger.info(message);
     } else if (currentSecond === 0) {
       // Minute boundary - print tock
       const message = this.configManager.getMessage('tock');
-      console.log(message);
+      logger.info(message);
     } else {
       // Every other second - print tick
       const message = this.configManager.getMessage('tick');
-      console.log(message);
+      logger.info(message);
     }
   }
 

@@ -1,21 +1,22 @@
 import { ClockEngine } from '../src/ClockEngine';
 import { ConfigManager } from '../src/ConfigManager';
+import { logger } from '../src/logger';
 
 describe('ClockEngine', () => {
   let configManager: ConfigManager;
   let clockEngine: ClockEngine;
-  let consoleLogSpy: jest.SpyInstance;
+  let loggerInfoSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    loggerInfoSpy = jest.spyOn(logger, 'info').mockImplementation();
     configManager = new ConfigManager();
     clockEngine = new ClockEngine(configManager);
   });
 
   afterEach(() => {
     clockEngine.stop();
-    consoleLogSpy.mockRestore();
+    loggerInfoSpy.mockRestore();
     jest.useRealTimers();
   });
 
@@ -63,20 +64,20 @@ describe('ClockEngine', () => {
 
       // Advance 100ms to trigger first tick
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
 
       // Move to next second (12:30:16)
       jest.setSystemTime(new Date(2024, 0, 1, 12, 30, 16));
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(2);
 
       // Move to next second (12:30:17)
       jest.setSystemTime(new Date(2024, 0, 1, 12, 30, 17));
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(3);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should print tock at the start of every minute (second 0)', () => {
@@ -85,16 +86,16 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
 
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Move to 12:31:00 (minute boundary)
       jest.setSystemTime(new Date(2024, 0, 1, 12, 31, 0));
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('tock');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tock');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should print bong at the start of every hour (minute 0, second 0)', () => {
@@ -103,16 +104,16 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
 
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Move to 13:00:00 (hour boundary)
       jest.setSystemTime(new Date(2024, 0, 1, 13, 0, 0));
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('bong');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('bong');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should only print one message per second (priority: bong > tock > tick)', () => {
@@ -121,22 +122,22 @@ describe('ClockEngine', () => {
       clockEngine.start();
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('bong');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-      expect(consoleLogSpy).not.toHaveBeenCalledWith('tock');
-      expect(consoleLogSpy).not.toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('bong');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).not.toHaveBeenCalledWith('tock');
+      expect(loggerInfoSpy).not.toHaveBeenCalledWith('tick');
 
       clockEngine.stop();
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Test at minute boundary (not hour): should print tock, not tick
       jest.setSystemTime(new Date(2024, 0, 1, 13, 15, 0));
       clockEngine.start();
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('tock');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-      expect(consoleLogSpy).not.toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tock');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).not.toHaveBeenCalledWith('tick');
     });
 
     it('should not print multiple times within the same second', () => {
@@ -146,7 +147,7 @@ describe('ClockEngine', () => {
 
       // First 100ms tick
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
 
       // Same second, multiple 100ms intervals
       jest.advanceTimersByTime(100);
@@ -154,35 +155,39 @@ describe('ClockEngine', () => {
       jest.advanceTimersByTime(100);
 
       // Should still only have been called once
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should use messages from ConfigManager', () => {
-      configManager.updateMessages({ tick: 'quack', tock: 'ding', bong: 'dong' });
+      configManager.updateMessages({
+        tick: 'quack',
+        tock: 'ding',
+        bong: 'dong',
+      });
 
       // Test tick
       jest.setSystemTime(new Date(2024, 0, 1, 12, 30, 15));
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('quack');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('quack');
 
       clockEngine.stop();
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Test tock
       jest.setSystemTime(new Date(2024, 0, 1, 12, 31, 0));
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('ding');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('ding');
 
       clockEngine.stop();
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Test bong
       jest.setSystemTime(new Date(2024, 0, 1, 13, 0, 0));
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('dong');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('dong');
     });
 
     it('should update messages dynamically when ConfigManager changes', () => {
@@ -190,18 +195,18 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
 
       // Update message
       configManager.updateMessages({ tick: 'beep' });
 
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Move to next second
       jest.setSystemTime(new Date(2024, 0, 1, 12, 30, 16));
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('beep');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('beep');
     });
 
     it('should reset lastSecond when stopped', () => {
@@ -209,17 +214,17 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
 
       clockEngine.stop();
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Start again at the same second
       clockEngine.start();
       jest.advanceTimersByTime(100);
 
       // Should print again because lastSecond was reset
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle midnight boundary correctly (00:00:00)', () => {
@@ -227,16 +232,16 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
 
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Move to midnight (00:00:00 - hour boundary)
       jest.setSystemTime(new Date(2024, 0, 2, 0, 0, 0));
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('bong');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('bong');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle second 59 -> second 0 transition correctly', () => {
@@ -244,17 +249,17 @@ describe('ClockEngine', () => {
 
       clockEngine.start();
       jest.advanceTimersByTime(100);
-      expect(consoleLogSpy).toHaveBeenCalledWith('tick');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tick');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
 
-      consoleLogSpy.mockClear();
+      loggerInfoSpy.mockClear();
 
       // Move from second 59 to second 0
       jest.setSystemTime(new Date(2024, 0, 1, 12, 31, 0));
       jest.advanceTimersByTime(100);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('tock');
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledWith('tock');
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -267,7 +272,7 @@ describe('ClockEngine', () => {
 
       // Advance time and verify no logs
       jest.advanceTimersByTime(1000);
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerInfoSpy).not.toHaveBeenCalled();
     });
 
     it('should not create multiple intervals on multiple starts', () => {
@@ -280,7 +285,7 @@ describe('ClockEngine', () => {
       jest.advanceTimersByTime(100);
 
       // Should only print once
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
