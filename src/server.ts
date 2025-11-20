@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Server as HttpServer } from 'http';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { ConfigManager } from './ConfigManager';
 import { DEFAULT_PORT } from './constants';
 import { ConfigUpdateSchema } from './schemas';
@@ -17,6 +18,16 @@ export class Server {
 
     // Security middleware
     this.app.use(helmet());
+
+    // Rate limiting - 100 requests per 15 minutes per IP
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Limit each IP to 100 requests per windowMs
+      standardHeaders: true, // Return rate limit info in RateLimit-* headers
+      legacyHeaders: false, // Disable X-RateLimit-* headers
+      message: 'Too many requests from this IP, please try again later.',
+    });
+    this.app.use(limiter);
 
     // Body parsing middleware
     this.app.use(express.json());
