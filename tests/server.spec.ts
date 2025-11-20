@@ -304,3 +304,74 @@ describe('Server HTTP Endpoints', () => {
     });
   });
 });
+
+describe('Server HTTP Endpoints - Error Scenarios', () => {
+  let server: Server;
+  let configManager: ConfigManager;
+  let app: express.Application;
+
+  beforeEach(() => {
+    configManager = new ConfigManager();
+    // Use a different port to avoid conflicts with other tests
+    server = new Server(configManager, 3003); 
+    app = server.getApp();
+  });
+
+  afterEach(() => {
+    server.close();
+  });
+
+  describe('GET /config', () => {
+    it('should return 500 if getMessages throws an error', async () => {
+      jest.spyOn(configManager, 'getMessages').mockImplementation(() => {
+        throw new Error('Database connection lost');
+      });
+
+      const response = await request(app).get('/config').expect(500);
+
+      expect(response.body.error).toBe('Failed to retrieve configuration');
+      expect(response.body.message).toBe('Database connection lost');
+    });
+
+     it('should return 500 for a non-Error object thrown', async () => {
+      jest.spyOn(configManager, 'getMessages').mockImplementation(() => {
+        throw 'A wild string appears!';
+      });
+
+      const response = await request(app).get('/config').expect(500);
+
+      expect(response.body.error).toBe('Failed to retrieve configuration');
+      expect(response.body.message).toBe('Unknown error');
+    });
+  });
+
+  describe('PATCH /config', () => {
+    it('should return 500 if updateMessages throws an error', async () => {
+      jest.spyOn(configManager, 'updateMessages').mockImplementation(() => {
+        throw new Error('Failed to write to config file');
+      });
+
+      const response = await request(app)
+        .patch('/config')
+        .send({ tick: 'quack' })
+        .expect(500);
+
+      expect(response.body.error).toBe('Failed to update configuration');
+      expect(response.body.message).toBe('Failed to write to config file');
+    });
+
+    it('should return 500 for a non-Error object thrown', async () => {
+      jest.spyOn(configManager, 'updateMessages').mockImplementation(() => {
+        throw 'A wild string appears!';
+      });
+
+      const response = await request(app)
+        .patch('/config')
+        .send({ tick: 'quack' })
+        .expect(500);
+
+      expect(response.body.error).toBe('Failed to update configuration');
+      expect(response.body.message).toBe('Unknown error');
+    });
+  });
+});
